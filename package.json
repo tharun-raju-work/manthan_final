@@ -1,15 +1,19 @@
 {
-  "name": "backend",
+  "name": "manthan-backend",
   "version": "1.0.0",
-  "description": "Professional Node.js backend",
+  "description": "Backend for Manthan civic platform",
   "main": "server.js",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
     "seed": "node src/utils/seedData.js",
     "seed:topics": "node src/utils/seedTopicsLocations.js",
     "lint": "eslint .",
-    "test": "jest"
+    "test": "jest",
+    "vercel-build": "echo hello"
   },
   "keywords": [],
   "author": "",
@@ -19,19 +23,19 @@
     "cloudinary": "^2.5.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
     "helmet": "^7.1.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.0",
-    "mongoose": "^7.8.6",
+    "mongoose": "^7.0.3",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "eslint": "^8.56.0",
     "jest": "^29.7.0",
-    "nodemon": "^3.0.2"
+    "nodemon": "^2.0.22"
   }
 }

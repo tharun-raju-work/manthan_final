@@ -22,22 +22,31 @@ const notificationRoutes = require('./src/routes/notificationRoutes');
 const app = express();
 
 // Create uploads directory if it doesn't exist
-(async () => {
-  try {
-    await fs.access('uploads');
-    await fs.access('uploads/avatars');
-  } catch {
-    await fs.mkdir('uploads', { recursive: true });
-    await fs.mkdir('uploads/avatars', { recursive: true });
-  }
-})();
+if (process.env.NODE_ENV !== 'production') {
+  (async () => {
+    try {
+      await fs.access('uploads');
+      await fs.access('uploads/avatars');
+    } catch {
+      await fs.mkdir('uploads', { recursive: true });
+      await fs.mkdir('uploads/avatars', { recursive: true });
+    }
+  })();
+}
 
 // Connect to database
 connectDB();
 
 // CORS configuration
+const allowedOrigins = ['http://localhost:3000', process.env.FRONTEND_URL];
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
@@ -65,48 +74,55 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 
+// Health check endpoint for Vercel
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Error Handling
 app.use(notFound);
 app.use(errorHandler);
 
-// Try different ports if default port is in use
-const startServer = async () => {
-  const ports = [5000, 5001, 5002, 5003];
-  
-  // Remove seeding to prevent data deletion
-  // await seedDatabase();
-  
-  for (const port of ports) {
-    try {
-      await new Promise((resolve, reject) => {
-        const server = app.listen(port)
-          .once('listening', () => {
-            console.log(`Server running in ${process.env.NODE_ENV} mode on port ${port}`);
-            resolve(server);
-          })
-          .once('error', (err) => {
-            if (err.code === 'EADDRINUSE') {
-              reject(err);
-            } else {
-              console.error('Server error:', err);
-              reject(err);
-            }
-          });
-      });
-      break;
-    } catch (err) {
-      if (err.code === 'EADDRINUSE') {
-        console.log(`Port ${port} is in use, trying next port...`);
-        if (port === ports[ports.length - 1]) {
-          console.error('All ports in use. Please free up a port and try again.');
-          process.exit(1);
+// Start server only in development
+if (process.env.NODE_ENV !== 'production') {
+  const startServer = async () => {
+    const ports = [5000, 5001, 5002, 5003];
+    
+    for (const port of ports) {
+      try {
+        await new Promise((resolve, reject) => {
+          const server = app.listen(port)
+            .once('listening', () => {
+              console.log(`Server running in ${process.env.NODE_ENV} mode on port ${port}`);
+              resolve(server);
+            })
+            .once('error', (err) => {
+              if (err.code === 'EADDRINUSE') {
+                reject(err);
+              } else {
+                console.error('Server error:', err);
+                reject(err);
+              }
+            });
+        });
+        break;
+      } catch (err) {
+        if (err.code === 'EADDRINUSE') {
+          console.log(`Port ${port} is in use, trying next port...`);
+          if (port === ports[ports.length - 1]) {
+            console.error('All ports in use. Please free up a port and try again.');
+            process.exit(1);
+          }
+          continue;
         }
-        continue;
+        console.error('Server error:', err);
+        process.exit(1);
       }
-      console.error('Server error:', err);
-      process.exit(1);
     }
-  }
-};
+  };
 
-startServer(); 
+  startServer();
+}
+
+// Export for Vercel
+module.exports = app; 
