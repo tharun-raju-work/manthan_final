@@ -13,7 +13,7 @@
     "seed:topics": "node src/utils/seedTopicsLocations.js",
     "lint": "eslint .",
     "test": "jest",
-    "vercel-build": "echo hello"
+    "vercel-build": "npm install && npm start"
   },
   "keywords": [],
   "author": "",
